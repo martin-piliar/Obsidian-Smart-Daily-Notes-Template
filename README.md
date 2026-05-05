@@ -38,6 +38,7 @@ Let's break down the key components:
 const SECTION_NAME = "Work";               // Section heading to look for
 const DAILY_NOTES_FOLDER = "";             // e.g. "Daily Notes/" — leave empty for vault root
 const FILENAME_FORMAT = "YYYY-MM-DD-dddd"; // Match your daily note filename format
+const DATE_FORMAT = "YYYY-MM-DD";          // ISO date prefix used to parse the current note's date
 const MAX_DAYS_TO_LOOK = 14;               // How far back to search
 ```
 All customization lives here — no need to touch the logic below.
@@ -64,7 +65,8 @@ The folder and format are driven by the configuration block at the top.
 
 ### 5. Content Validation
 ```javascript
-const sectionRegex = new RegExp(`# ${SECTION_NAME}\\n([\\s\\S]*?)(?=\\n# |$)`);
+const escapedSection = SECTION_NAME.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const sectionRegex = new RegExp(`# ${escapedSection}\\n([\\s\\S]*?)(?=\\n# |$)`);
 const workSection = content.match(sectionRegex);
 
 if (workSection && workSection[1].trim().length > 0) {
