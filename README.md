@@ -1,21 +1,21 @@
-# Obsidian Smart Daily Notes Template
+# Obsidian Daily Notes Template with Smart Previous-Entry Lookup
 
-![Obsidian Downloads](https://img.shields.io/badge/templater-compatible-green)
-![GitHub](https://img.shields.io/badge/license-MIT-blue)
+![Templater compatible](https://img.shields.io/badge/templater-compatible-green)
+![License: MIT](https://img.shields.io/badge/license-MIT-blue)
 
-A smart daily notes template for Obsidian that automatically finds and links to your last work items. Perfect for developers who need quick access to their previous work during standups or status updates.
+A Templater-powered daily note template for Obsidian that automatically finds and embeds your most recent work section — skipping empty days. Useful for developers and knowledge workers who want fast access to previous work items during standups, reviews, or weekly recaps.
 
 ## Features
 
-- 🔍 Finds your last work entry
-- 🚫 Skips empty work logs automatically
-- ⚡ Works with any folder structure
-- 🛑 Built-in safety limits to prevent infinite loops
-- 📱 Perfect for quick reference during meetings
+- Finds your last work entry
+- Skips empty work logs automatically
+- Works with any folder structure
+- Built-in safety limits to prevent infinite loops
+- Perfect for quick reference during meetings
 
 ## Preview
 
-![Preview](preview.gif)
+![Obsidian daily note template automatically linking to previous work section](preview.gif)
 
 ## Prerequisites
 
@@ -33,58 +33,64 @@ A smart daily notes template for Obsidian that automatically finds and links to 
 
 Let's break down the key components:
 
-### 1. Date Initialization
+### 1. Configuration Block
 ```javascript
-const currentNoteDate = moment(tp.file.title.split('-').slice(0,3).join('-'), 'YYYY-MM-DD');
+const SECTION_NAME = "Work";               // Section heading to look for
+const DAILY_NOTES_FOLDER = "";             // e.g. "Daily Notes/" — leave empty for vault root
+const FILENAME_FORMAT = "YYYY-MM-DD-dddd"; // Match your daily note filename format
+const MAX_DAYS_TO_LOOK = 14;               // How far back to search
+```
+All customization lives here — no need to touch the logic below.
+
+### 2. Date Initialization
+```javascript
+const currentNoteDate = moment(tp.file.title.split('-').slice(0, 3).join('-'), 'YYYY-MM-DD');
 let checkDate = currentNoteDate.clone().subtract(1, 'days');
 ```
 This gets us started with yesterday's date.
 
-### 2. Smart Search Logic
+### 3. Smart Search Logic
 ```javascript
-const maxDaysToLook = 14;  // Safety limit
-let daysChecked = 0;
-while (!fileFound && daysChecked < maxDaysToLook) {
+while (!fileFound && daysChecked < MAX_DAYS_TO_LOOK) {
 ```
-We'll look back up to 14 days, preventing any infinite loops. This is handy for longer breaks or holidays.
+Looks back up to `MAX_DAYS_TO_LOOK` days, preventing infinite loops. Handy for longer breaks or holidays.
 
-### 3. File Path Handling
+### 4. File Path Handling
 ```javascript
-const fileName = `${checkDate.format('YYYY-MM-DD')}-${checkDate.format('dddd')}`;
-const filePath = `${fileName}.md`;  // Customize this based on your folder structure
+const fileName = checkDate.format(FILENAME_FORMAT);
+const filePath = `${DAILY_NOTES_FOLDER}${fileName}.md`;
 ```
-The template is flexible - you can add your own folder path here based on your vault structure.
+The folder and format are driven by the configuration block at the top.
 
-### 4. Content Validation
+### 5. Content Validation
 ```javascript
-const content = await app.vault.adapter.read(filePath);
-const workSection = content.match(/# Work\n([\s\S]*?)(?=\n#|$)/);
+const sectionRegex = new RegExp(`# ${SECTION_NAME}\\n([\\s\\S]*?)(?=\\n# |$)`);
+const workSection = content.match(sectionRegex);
 
 if (workSection && workSection[1].trim().length > 0) {
 ```
-This checks if the file exists and has actual content in the Work section.
+Matches only top-level `# ` headings as boundaries, so sub-headings like `## Tickets` inside the section are included rather than truncating the match.
 
 ## Customization
 
 ### File Path Structure
-Modify the `filePath` line to match your vault structure:
+Set `DAILY_NOTES_FOLDER` at the top of the template:
 ```javascript
-const filePath = `Daily Notes/${fileName}.md`;
-const filePath = `Journal/${fileName}.md`;
-const filePath = `Notes/Daily/${fileName}.md`;
+const DAILY_NOTES_FOLDER = "Daily Notes/";
+const DAILY_NOTES_FOLDER = "Journal/";
+const DAILY_NOTES_FOLDER = "Notes/Daily/";
 ```
 
 ### Lookback Period
-Adjust how many days the template looks back:
+Adjust `MAX_DAYS_TO_LOOK` at the top of the template:
 ```javascript
-const maxDaysToLook = 14;  // Change this number
+const MAX_DAYS_TO_LOOK = 14;  // Change this number
 ```
 
 ### Section Names
-Modify the section headers and matching patterns:
+Change `SECTION_NAME` at the top of the template:
 ```javascript
-const workSection = content.match(/# Work\n([\s\S]*?)(?=\n#|$)/);
-// Change to match your section names
+const SECTION_NAME = "Work";  // Change to match your section heading
 ```
 
 ## Troubleshooting
@@ -119,10 +125,3 @@ For major changes, please open an issue first to discuss what you'd like to chan
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
-
-## Questions or Issues?
-
-Feel free to open an issue on GitHub if you:
-- Found a bug
-- Have a feature request
-- Want to share your customizations
